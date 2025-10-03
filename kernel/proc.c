@@ -297,6 +297,36 @@ void reparent(struct proc *p) {
 void exit(int status) {
   struct proc *p = myproc();
 
+  // 定义状态对应的字符串
+  static char *states[] = {
+      [UNUSED] "unused", [SLEEPING] "sleep ", [RUNNABLE] "runble", [RUNNING] "run   ", [ZOMBIE] "zombie"};
+
+  // 此时已经持有当前进程的相关信息
+  // 1.打印父进程信息
+  acquire(&p->lock);  // 获取当前进程锁
+  struct proc *p_parent = p->parent;
+  release(&p->lock);  // 释放当前进程锁
+
+  acquire(&p_parent->lock);  // 获取进程p的父进程的锁
+  exit_info("proc %d exit, parent pid %d, name %s, state %s\n", p->pid, p_parent->pid, p_parent->name,
+            states[p_parent->state]);
+  release(&p_parent->lock);  // 释放
+
+  // 2.遍历全局进程数组，检查每个进程块的父进程是不是当前进程，是的话打印，此时需要一个计数器
+  struct proc *pp;
+  int cnt = 0;
+  for (pp = proc; pp < &proc[NPROC]; pp++) {
+    if (pp->parent == p) {
+      // 当前进程p的子进程找到了
+      acquire(&pp->lock);  // 获取锁
+
+      exit_info("proc %d exit, child %d, pid %d, name %s, state %s\n", p->pid, cnt, pp->pid, pp->name,
+                states[pp->state]);
+      cnt++;               // 先打印再添加
+      release(&pp->lock);  // 释放锁
+    }
+  }
+
   if (p == initproc) panic("init exiting");
 
   // Close all open files.
