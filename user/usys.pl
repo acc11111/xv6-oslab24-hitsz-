@@ -37,3 +37,4 @@ entry("sbrk");
 entry("sleep");
 entry("uptime");
 entry("rename");
+entry("yield"); # 添加到脚本让调用走内核切换

@@ -83,3 +83,29 @@ uint64 sys_rename(void) {
   p->name[len] = '\0';
   return 0;
 }
+
+uint64 sys_yield(void) {
+  // 1. 获取当前正在执行的进程PCB
+  struct proc *p = myproc();
+
+  // 2. 打印当前进程的上下文保存地址区间
+  printf("Save the context of the process to the memory region from address %p to %p\n", &p->context, &p->context + 1);
+
+  // 3. 打印当前进程的用户态PC值
+  printf("Current running process pid is %d and user pc is %p\n", p->pid, p->trapframe->epc);
+
+  for (p = proc; p < &proc[NPROC]; p++) {
+    acquire(&p->lock);
+    if (p->state == RUNNABLE) {
+      // 找到下一个runnable的进程
+      // 4. 打印下一个被调度进程的PID和用户态
+      printf("Next runnable process pid is %d and user pc is %p\n", p->pid, p->trapframe->epc);
+    }
+    release(&p->lock);
+  }
+
+  // 5. 将当前进程挂起，调用XV6内核的yield函数
+  yield();
+
+  return 0;
+}
