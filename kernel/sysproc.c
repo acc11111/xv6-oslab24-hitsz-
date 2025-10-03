@@ -20,8 +20,10 @@ uint64 sys_fork(void) { return fork(); }
 
 uint64 sys_wait(void) {
   uint64 p;
+  int flags;  // 标志位--用于处理阻塞or非阻塞
   if (argaddr(0, &p) < 0) return -1;
-  return wait(p);
+  if (argint(1, &flags) < 0) return -1;  // 获取标志位，标志位是第二个参数，offset==1
+  return wait(p, flags);
 }
 
 uint64 sys_sbrk(void) {

@@ -386,7 +386,8 @@ void exit(int status) {
 
 // Wait for a child process to exit and return its pid.
 // Return -1 if this process has no children.
-int wait(uint64 addr) {
+// TODO修改函数签名和主体来解决
+int wait(uint64 addr, int flags) {
   struct proc *np;
   int havekids, pid;
   struct proc *p = myproc();
@@ -431,7 +432,14 @@ int wait(uint64 addr) {
     }
 
     // Wait for a child to exit.
-    sleep(p, &p->lock);  // DOC: wait-sleep
+    if (flags == 0) {
+      // 传入为0的参数的时候才是阻塞，否则不阻塞
+      sleep(p, &p->lock);  // DOC: wait-sleep
+    } else if (flags == 1) {
+      // 非阻塞返回-1执行其他任务
+      release(&p->lock);
+      return -1;
+    }
   }
 }
 
